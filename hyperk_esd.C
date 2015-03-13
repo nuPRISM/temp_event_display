@@ -99,8 +99,8 @@ void hyperk_esd()
 	// for fast development, hardwire a file and comment out the block above
 	//fiTQunFile = new TFile("/home/aleph/ajf/hyperk/installationFromGit/hk-fitqun/fitqun_HyperK_muminus_1000MeV_random_4pi_000.root");
 	
-        fiTQunTree=(TTree *) fiTQunFile->Get("fiTQun");
-	fiTQun.Init(fiTQunTree);
+        //fiTQunTree=(TTree *) fiTQunFile->Get("fiTQun");
+	//fiTQun.Init(fiTQunTree);
 	
 	gSystem->cd(originalDirectory);
 	
