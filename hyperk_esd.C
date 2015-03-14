@@ -9,7 +9,7 @@ TFile* WCSimFile, *fiTQunFile;
 TTree * wcsimGeoT;
 TTree * wcsimT;
 TTree*	fiTQunTree;
-float maxX,maxY,maxZ,minZ, minY, minX;
+float maxX,maxY,maxZ,minZ, minY, minX, yOffset;
 TGeoVolume *WorldVolume,*SimpleVolume;
 TEveElementList *FlatGeometry;
 TEveScene*  UnrolledScene;
@@ -507,10 +507,11 @@ wcsim_load_cherenkov(int iTrigger){
 		WCSimRootPMT pmt = wcsimrootgeom -> GetPMT ( tubeId );
 		double pmtX = pmt.GetPosition (0);
 		double pmtY = pmt.GetPosition (1);
+                pmtY = pmtY + yOffset;
 		double pmtZ = pmt.GetPosition (2);
 		int location= pmt.GetCylLoc();
-		if(fabs(pmtY-maxY) < 0.001) location = 0;
-		else if(fabs(pmtY-minY) < 0.001) location = 2;
+		if(pmtY > maxY - 0.5) location = 0;
+		else if(pmtY < minY + 0.5) location = 2;
 		else location = 1;
 		double pmtX2=pmtX;
 		double pmtY2=pmtY;
@@ -528,7 +529,7 @@ wcsim_load_cherenkov(int iTrigger){
 		else
 		{
 			CherenkovHits2->AddCone(TEveVector(pmtX2,pmtY2,pmtZ2),TEveVector(0.0,0.0,1.0) ,PMTRadius ); 
-			CherenkovHits->AddCone(TEveVector(pmtX,pmtY,pmtZ),TEveVector(1.0,0.0,0.0) ,PMTRadius ); 
+			CherenkovHits->AddCone(TEveVector(pmtX,pmtY,pmtZ),TEveVector(0.0,1.0,0.0) ,PMTRadius ); 
 		}
 		if(fDigitIsTime)
 		{
@@ -575,17 +576,19 @@ wcsim_load_truth_tracks(int iTrigger,bool &firstTrackIsNeutrino,bool &secondTrac
 			int pdgCode=wcsimroottrack->GetIpnu();
 			if(abs(pdgCode)==12 || abs(pdgCode==14))
 				firstTrackIsNeutrino=kTRUE;
-			if(ntrack>1)
-			{
-				TObject *element = (wcsimrootTrigger->GetTracks())->At(1);
-				WCSimRootTrack *wcsimroottrack = dynamic_cast<WCSimRootTrack*>(element);
-				int pdgCode=wcsimroottrack->GetIpnu();
-				if(abs(pdgCode)==2212 
-					&& wcsimroottrack->GetStart(0)==0.0
-				&& wcsimroottrack->GetStart(1)==0.0
-				&& wcsimroottrack->GetStart(2)==0.0
-				)secondTrackIsTarget=kTRUE;
-			}
+
+//Dangerous assumptions about targets, so commented out
+//			if(ntrack>1)
+//			{
+//				TObject *element = (wcsimrootTrigger->GetTracks())->At(1);
+//				WCSimRootTrack *wcsimroottrack = dynamic_cast<WCSimRootTrack*>(element);
+//				int pdgCode=wcsimroottrack->GetIpnu();
+//				if(abs(pdgCode)==2212 
+//					&& wcsimroottrack->GetStart(0)==0.0
+//				&& wcsimroottrack->GetStart(1)==0.0
+//				&& wcsimroottrack->GetStart(2)==0.0
+//				)secondTrackIsTarget=kTRUE;
+//			}
 		}
 		// Loop through elements in the TClonesArray of WCSimTracks
 		TEveElementList* TrueTracks = new TEveElementList(Form("Truth Tracks subevent %i",iTrigger));
@@ -630,10 +633,10 @@ wcsim_load_truth_tracks(int iTrigger,bool &firstTrackIsNeutrino,bool &secondTrac
 			if(abs(pdgCode)==2212)track->SetMainColor(kRed);
 			
 			Stop[0]=wcsimroottrack->GetStop(0);
-			Stop[1]=wcsimroottrack->GetStop(1);
+			Stop[1]=wcsimroottrack->GetStop(1) + yOffset;
 			Stop[2]=wcsimroottrack->GetStop(2);
 			Start[0]=wcsimroottrack->GetStart(0);
-			Start[1]=wcsimroottrack->GetStart(1);
+			Start[1]=wcsimroottrack->GetStart(1) + yOffset;
 			Start[2]=wcsimroottrack->GetStart(2);
 			/*
 			Implement fix for neutrino and target start positions
@@ -642,7 +645,7 @@ wcsim_load_truth_tracks(int iTrigger,bool &firstTrackIsNeutrino,bool &secondTrac
 			{
 				track->SetNextPoint(wcsimroottrack->GetStop(0),wcsimroottrack->GetStop(1),maxZ*-1.1);
 				Start[0]=wcsimroottrack->GetStop(0);
-				Start[1]=wcsimroottrack->GetStop(1);
+				Start[1]=wcsimroottrack->GetStop(1) + yOffset;
 				Start[2]=maxZ*-1.1;
 			}
 			else
@@ -651,19 +654,19 @@ wcsim_load_truth_tracks(int iTrigger,bool &firstTrackIsNeutrino,bool &secondTrac
 				{
 					track->SetNextPoint(wcsimroottrack->GetStop(0),wcsimroottrack->GetStop(1),wcsimroottrack->GetStop(2));
 					Start[0]=wcsimroottrack->GetStop(0);
-					Start[1]=wcsimroottrack->GetStop(1);
+					Start[1]=wcsimroottrack->GetStop(1) + yOffset;
 					Start[2]=wcsimroottrack->GetStop(2);
 				}
 				else
 				{
-					track->SetNextPoint(wcsimroottrack->GetStart(0),wcsimroottrack->GetStart(1),wcsimroottrack->GetStart(2));
+					track->SetNextPoint(wcsimroottrack->GetStart(0),wcsimroottrack->GetStart(1) + yOffset,wcsimroottrack->GetStart(2));
 				}
 			}
 			if(abs(pdgCode)==12 || abs(pdgCode)==14 || abs(pdgCode)==16
 				||abs(pdgCode)==22  ||abs(pdgCode)==111  ||abs(pdgCode)==310)
 			track->SetLineStyle(2);
 			
-			track->SetNextPoint(wcsimroottrack->GetStop(0),wcsimroottrack->GetStop(1),wcsimroottrack->GetStop(2));
+			track->SetNextPoint(wcsimroottrack->GetStop(0),wcsimroottrack->GetStop(1) + yOffset,wcsimroottrack->GetStop(2));
 			Mass=wcsimroottrack->GetM();
 			Momentum=wcsimroottrack->GetP();
 			Energy=wcsimroottrack->GetE();
@@ -690,11 +693,11 @@ void createGeometry(bool flatTube)
 	/* 
 	Find the maximum values of X,Y,Z 
 	*/
-	maxX=0;
+	maxX=-1000000000000;
 	minX=1000000000000;
-        maxY=0;
+        maxY=-1000000000000;
 	minY=1000000000000;
-        maxZ=0;
+        maxZ=-1000000000000;
 	minZ=1000000000000; // I assume z goes negative!
 	for(int tubeId=0;tubeId<wcsimrootgeom->GetWCNumPMT();tubeId++)
 	{
@@ -703,11 +706,6 @@ void createGeometry(bool flatTube)
 		double pmtX = pmt.GetPosition (0);
 		double pmtY = pmt.GetPosition (1);
 		double pmtZ = pmt.GetPosition (2);
-        	if(fabs(pmtY-maxY) < 0.001) location = 0;
-		else if(fabs(pmtY-minY) < 0.001) location = 2;
-		else location = 1;
-
-          	if(location !=0 && location !=1 && location !=2)continue;
 		if(pmtX>maxX)maxX=pmtX;
 		if(pmtX<minX)minX=pmtX;
          	if(pmtY>maxY)maxY=pmtY;
@@ -715,6 +713,11 @@ void createGeometry(bool flatTube)
         	if(pmtZ>maxZ)maxZ=pmtZ;   		
 		if(pmtZ<minZ)minZ=pmtZ;   		
 	}
+
+	float height = (maxY - minY)/2.0;
+        yOffset = height - maxY;
+	maxY = height;
+	minY = -height;
 	cout<<" Maximum values x,y,x "<<maxX<<" "<<maxY<<" "<<maxZ<<endl;
 	// MATERIALS, MIXTURES AND TRACKING MEDIA
 	// Material: world
@@ -814,9 +817,10 @@ void createGeometry(bool flatTube)
 		double pmtX = pmt.GetPosition (0);
 		double pmtY = pmt.GetPosition (1);
 		double pmtZ = pmt.GetPosition (2);
+                pmtY = pmtY + yOffset;
 		int location=pmt.GetCylLoc();
-		if(fabs(pmtY-maxY) < 0.001) location = 0;
-		else if(fabs(pmtY-minY) < 0.001) location = 2;
+		if(pmtY > maxY - 0.5) location = 0;
+		else if(pmtY < minY + 0.5) location = 2;
 		else location = 1;
 		pmtX2=pmtX;
 		pmtY2=pmtY;
