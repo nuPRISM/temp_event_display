@@ -1,5 +1,6 @@
 // Based on alice_esd.C from ROOT tutorials
 // Modified for hyperk by Alex Finch
+
 fitQunDisplay fiTQun;
 WCSimRootGeom * wcsimrootgeom;
 WCSimRootEvent * wcsimrootEvent;
@@ -8,7 +9,7 @@ TFile* WCSimFile, *fiTQunFile;
 TTree * wcsimGeoT;
 TTree * wcsimT;
 TTree*	fiTQunTree;
-float maxX,maxY,maxZ,minZ;
+float maxX,maxY,maxZ,minZ, minY, minX;
 TGeoVolume *WorldVolume,*SimpleVolume;
 TEveElementList *FlatGeometry;
 TEveScene*  UnrolledScene;
@@ -103,7 +104,6 @@ void hyperk_esd()
 	//fiTQun.Init(fiTQunTree);
 	
 	gSystem->cd(originalDirectory);
-	
 	/*
 	Initialise WCSim
 	*/
@@ -126,6 +126,7 @@ void hyperk_esd()
     	/*
     	Initialise the html summary tab
     	*/
+
     	gROOT->LoadMacro("hyperk_esd_html_summary.C");
     	fgHtmlSummary = new HtmlSummary("HyperK Event Display Summary Table");
     	slot = TEveWindow::CreateWindowInTab(gEve->GetBrowser()->GetTabRight());
@@ -507,7 +508,10 @@ wcsim_load_cherenkov(int iTrigger){
 		double pmtX = pmt.GetPosition (0);
 		double pmtY = pmt.GetPosition (1);
 		double pmtZ = pmt.GetPosition (2);
-		int location=pmt.GetCylLoc();
+		int location= pmt.GetCylLoc();
+		if(fabs(pmtY-maxY) < 0.001) location = 0;
+		else if(fabs(pmtY-minY) < 0.001) location = 2;
+		else location = 1;
 		double pmtX2=pmtX;
 		double pmtY2=pmtY;
 		double pmtZ2=pmtZ;
@@ -515,16 +519,16 @@ wcsim_load_cherenkov(int iTrigger){
 		
 		if(location==1)
 		{
-			float lengthXY=sqrt(pmtX*pmtX+pmtY*pmtY);
+			float lengthXY=sqrt(pmtX*pmtX+pmtZ*pmtZ);
 			float xd=pmtX/lengthXY;
-			float yd=pmtY/lengthXY;
+			float yd=pmtZ/lengthXY;
 			CherenkovHits2->AddCone(TEveVector(pmtX2,pmtY2,pmtZ2),TEveVector(0.0,0.0,1.0) ,PMTRadius ); 
-			CherenkovHits->AddCone(TEveVector(pmtX,pmtY,pmtZ),TEveVector(xd,yd,0.0) ,PMTRadius);
+			CherenkovHits->AddCone(TEveVector(pmtX,pmtY,pmtZ),TEveVector(xd,0.0,yd) ,PMTRadius);
 		}
 		else
 		{
 			CherenkovHits2->AddCone(TEveVector(pmtX2,pmtY2,pmtZ2),TEveVector(0.0,0.0,1.0) ,PMTRadius ); 
-			CherenkovHits->AddCone(TEveVector(pmtX,pmtY,pmtZ),TEveVector(0.0,0.0,1.0) ,PMTRadius ); 
+			CherenkovHits->AddCone(TEveVector(pmtX,pmtY,pmtZ),TEveVector(1.0,0.0,0.0) ,PMTRadius ); 
 		}
 		if(fDigitIsTime)
 		{
@@ -687,20 +691,28 @@ void createGeometry(bool flatTube)
 	Find the maximum values of X,Y,Z 
 	*/
 	maxX=0;
-	maxY=0;
-	maxZ=0;
-	minZ=0; // I assume z goes negative!
+	minX=1000000000000;
+        maxY=0;
+	minY=1000000000000;
+        maxZ=0;
+	minZ=1000000000000; // I assume z goes negative!
 	for(int tubeId=0;tubeId<wcsimrootgeom->GetWCNumPMT();tubeId++)
 	{
 		WCSimRootPMT pmt = wcsimrootgeom -> GetPMT ( tubeId );
 		int location=pmt.GetCylLoc();
-		if(location !=0 && location !=1 && location !=2)continue;
 		double pmtX = pmt.GetPosition (0);
 		double pmtY = pmt.GetPosition (1);
 		double pmtZ = pmt.GetPosition (2);
+        	if(fabs(pmtY-maxY) < 0.001) location = 0;
+		else if(fabs(pmtY-minY) < 0.001) location = 2;
+		else location = 1;
+
+          	if(location !=0 && location !=1 && location !=2)continue;
 		if(pmtX>maxX)maxX=pmtX;
-		if(pmtY>maxY)maxY=pmtY;
-		if(pmtZ>maxZ)maxZ=pmtZ;   		
+		if(pmtX<minX)minX=pmtX;
+         	if(pmtY>maxY)maxY=pmtY;
+         	if(pmtY<minY)minY=pmtY;
+        	if(pmtZ>maxZ)maxZ=pmtZ;   		
 		if(pmtZ<minZ)minZ=pmtZ;   		
 	}
 	cout<<" Maximum values x,y,x "<<maxX<<" "<<maxY<<" "<<maxZ<<endl;
@@ -802,10 +814,10 @@ void createGeometry(bool flatTube)
 		double pmtX = pmt.GetPosition (0);
 		double pmtY = pmt.GetPosition (1);
 		double pmtZ = pmt.GetPosition (2);
-		int location= pmt.GetCylLoc();
-		
-		//cout<<" location "<<location<<endl;
-		//cout<<" x,y,z of phototube          "<<pmtX<<" "<<pmtY<<" "<<pmtZ<<endl;
+		int location=pmt.GetCylLoc();
+		if(fabs(pmtY-maxY) < 0.001) location = 0;
+		else if(fabs(pmtY-minY) < 0.001) location = 2;
+		else location = 1;
 		pmtX2=pmtX;
 		pmtY2=pmtY;
 		pmtZ2=pmtZ;
@@ -819,18 +831,18 @@ void createGeometry(bool flatTube)
 		float rad2deg=57.3;
 		if(location==1)
 		{
-			float lengthXY=sqrt(pmtX*pmtX+pmtY*pmtY);
+			float lengthXY=sqrt(pmtX*pmtX+pmtZ*pmtZ);
 			float xd=pmtX/lengthXY;
-			float yd=pmtY/lengthXY;
-			TVector3 D(xd,yd,0.0);
+			float yd=pmtZ/lengthXY;
+			TVector3 D(xd,0.0,yd);
 			theta=D.Theta()*rad2deg;
 			phi=D.Phi()*rad2deg;
 		}
 		else
 		{
-			theta=0.0;
-			phi=0.0;
-			if(location==2)theta=180.0; 
+			theta=-90.0;
+			phi=-90.0;
+			if(location==2)theta=90.0; 
 		}
 		//cout<<" tube> "<<tubeId<<endl;
 		if(location==0 || location ==1 || location ==2){
@@ -844,7 +856,7 @@ void createGeometry(bool flatTube)
 			shape->SetMainTransparency(70);
 			FlatGeometry->AddElement(shape);
 			/* now the 'normal' root geometry objects */
-			TGeoRotation TubeRotation("rotation",phi-90.0,theta,0.0);//D.Phi(),D.Theta,0.0);
+			TGeoRotation TubeRotation("rotation",phi+90,theta-180.0,0.0);//D.Phi(),D.Theta,0.0);
 			TGeoTranslation PhototubePositionMatrix("shift",pmtX,pmtY,pmtZ);
 			TGeoCombiTrans *ShiftAndTwist = new TGeoCombiTrans(PhototubePositionMatrix,TubeRotation);
 			SimpleVolume->AddNode(PhotoTubeVolume, tubeId, ShiftAndTwist);
@@ -868,25 +880,26 @@ void       UnrollView(double* pmtX ,double* pmtY,double* pmtZ,int location,float
 	if(location==0)
 	{
 		//	cout<<" add 2* "<<maxY<<" to "<<*pmtY<<endl;
-		*pmtY+=2.2*maxY;
+		*pmtY = *pmtX + 1.05*maxX + maxY;
+		*pmtX = *pmtZ;
 		//cout<<" result is "<<*pmtY<<endl;
 	}
 	if(location==2)
 	{//		cout<<" subtract  2* "<<maxY<<" from "<<*pmtY<<endl;
 		
-		
-		*pmtY-=2.2*maxY;
+		*pmtY = *pmtX - 1.05*maxX - maxY;
+		*pmtX = *pmtZ;
 	}	
 	if(location==1)
 	{
-		float angle=atan2(*pmtY,*pmtX)+(3.1415927/2.0);
-		float rho=maxY*angle;
+		float angle=atan2(*pmtX,*pmtZ);//+(3.1415927/2.0);
+		float rho=maxZ*angle;
 		*pmtX=rho;
-		*pmtY=*pmtZ;		
+		*pmtY=*pmtY;		
 	}
 	*pmtZ=0.0;
 	//cout<<" x,y,z of Unrolled phototube "<<*pmtX<<" "<<*pmtY<<" "<<*pmtZ<<endl;
-	float xshift=maxY*(3.1415927);
+	float xshift=maxZ*(3.1415927);
 	float x=*pmtX;
 	if(x>xshift)x=x-(xshift*2);
 	*pmtX=x;
