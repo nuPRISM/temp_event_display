@@ -203,7 +203,7 @@ void load_event()
 	// Load event specified in global event_id.
 	// The contents of previous event are removed.
 	
-	//printf("Loading event %d.\n", event_id);
+	printf("Loading event %d.\n", event_id);
 	
 	gEve->GetViewers()->DeleteAnnotations();
 	TEveEventManager* CurrentEvent =gEve->GetCurrentEvent();
@@ -211,15 +211,14 @@ void load_event()
 		if(CurrentEvent != 0)CurrentEvent->DestroyElements();
 		if( UnrolledScene !=0)UnrolledScene->DestroyElements();	
 	}
-	
 	wcsimT->GetEvent(event_id);	
 	fgHtmlSummary->Clear("D");
-	for(int iTrigger=0;iTrigger<wcsimrootEvent->GetNumberOfEvents();iTrigger++)
+    for(int iTrigger=0;iTrigger<wcsimrootEvent->GetNumberOfEvents();iTrigger++)
 	{
-		wcsimrootTrigger = wcsimrootEvent->GetTrigger(iTrigger); 
-		bool firstTrackIsNeutrino,secondTrackIsTarget;
-		wcsim_load_event(iTrigger,firstTrackIsNeutrino,secondTrackIsTarget);
-		update_html_summary(iTrigger,wcsimrootTrigger,firstTrackIsNeutrino,secondTrackIsTarget);
+        wcsimrootTrigger = wcsimrootEvent->GetTrigger(iTrigger); 
+        bool firstTrackIsNeutrino,secondTrackIsTarget;
+        wcsim_load_event(iTrigger,firstTrackIsNeutrino,secondTrackIsTarget);
+        update_html_summary(iTrigger,wcsimrootTrigger,firstTrackIsNeutrino,secondTrackIsTarget);
 	}
 	if(FITQUN)fitqun_load_event(event_id);
 	if(FITQUN)fiTQun.CreateTable( fgHtmlSummary);
@@ -273,8 +272,8 @@ public:
 		fDigitIsTime=s;
 		for(int iTrigger=0;iTrigger<wcsimrootEvent->GetNumberOfEvents();iTrigger++)
 		{
-			//if(iTrigger==0)cout<<" main event "<<endl;
-			//if(iTrigger>0)cout<<" delayed sub Event "<<iTrigger<<endl;
+			if(iTrigger==0)cout<<" main event "<<endl;
+			if(iTrigger>0)cout<<" delayed sub Event "<<iTrigger<<endl;
 			wcsimrootTrigger = wcsimrootEvent->GetTrigger(iTrigger); 
 			reload_wcsim_hits(iTrigger);
 		}
@@ -580,7 +579,7 @@ wcsim_load_truth_tracks(int iTrigger,bool &firstTrackIsNeutrino,bool &secondTrac
 //Dangerous assumptions about targets, so commented out
 //			if(ntrack>1)
 //			{
-//				TObject *element = (wcsimrootTrigger->GetTracks())->At(1);
+//				TObject *element = (wcsimrootTrigger->GetTracks())->At(0);
 //				WCSimRootTrack *wcsimroottrack = dynamic_cast<WCSimRootTrack*>(element);
 //				int pdgCode=wcsimroottrack->GetIpnu();
 //				if(abs(pdgCode)==2212 
@@ -598,22 +597,34 @@ wcsim_load_truth_tracks(int iTrigger,bool &firstTrackIsNeutrino,bool &secondTrac
 			
 			WCSimRootTrack *wcsimroottrack = dynamic_cast<WCSimRootTrack*>(element);
 			int pdgCode=wcsimroottrack->GetIpnu();
-			if(pdgCode==0)continue;
-			TString Name("Truth ");
-			if(pdgCode==11)Name+="electron";
-			if(pdgCode==-11)Name+="positron";
-			if(pdgCode==12)Name+="electron neutrino";
-			if(pdgCode==-12)Name+="electron anti-neutrino";
-			if(pdgCode==13)Name+="muon";
-			if(pdgCode==-13)Name+="anti-muon";
-			if(pdgCode==14)Name+="muon neutrino";
-			if(pdgCode==-14)Name+="muon anti-neutrino";
-			if(pdgCode==2212)Name+="proton";
-			if(pdgCode==-2212)Name+="anti-proton";
-			if(pdgCode==22)Name+="photon";
+            if(pdgCode==0)continue;
+            TString Name("True ");
+            if(pdgCode==11)Name+="electron";
+            else if(pdgCode==-11)Name+="positron";
+            else if(pdgCode==12)Name+="electron neutrino";
+            else if(pdgCode==-12)Name+="electron anti-neutrino";
+            else if(pdgCode==13)Name+="muon";
+            else if(pdgCode==-13)Name+="anti-muon";
+            else if(pdgCode==14)Name+="muon neutrino";
+            else if(pdgCode==-14)Name+="muon anti-neutrino";
+            else if(pdgCode==2212)Name+="proton";
+            else if(pdgCode==-2212)Name+="anti-proton";
+            else if(pdgCode==2112)Name+="neutron";
+            else if(pdgCode==-2112)Name+="anti-neutron";
+            else if(pdgCode==211)Name+="pi-plus";
+            else if(pdgCode==-211)Name+="pi-minus";
+            else if(pdgCode==321)Name+="K-plus";
+            else if(pdgCode==-321)Name+="K-minus";
+            else if(pdgCode==130)Name+="K-long";
+            else if(pdgCode==310)Name+="K-short";
+            else if(pdgCode==221)Name+="eta";
+            else if(pdgCode==111)Name+="pi-zero";
+            else if(fabs(pdgCode)>2500 && fabs(pdgCode) < 10000)Name+="strange meson";
+            else if(fabs(pdgCode)>350 && fabs(pdgCode) < 2000)Name+="D meson (probably)";
+            else if(pdgCode==22)Name+="photon";
+            else if(pdgCode > 10000)Name+="nuclear isotope";
 			if(iTrigger==0)
 			{
-				if(i==1 && secondTrackIsTarget) Name+=" (target) ";
 				if(i==0 && firstTrackIsNeutrino) Name+=" (beam) ";
 			}
 			THKMCTrack* track=new THKMCTrack(Name);
@@ -626,12 +637,14 @@ wcsim_load_truth_tracks(int iTrigger,bool &firstTrackIsNeutrino,bool &secondTrac
 			float Energy=0;
 			track->SetElementTitle(Name);
 			track->SetMainColor(kWhite);
-			if(abs(pdgCode)==11)track->SetMainColor(kYellow);
+			if(abs(pdgCode)==11)track->SetMainColor(kBlue);
 			if(abs(pdgCode)==12)track->SetMainColor(kBlue);
-			if(abs(pdgCode)==13)track->SetMainColor(kMagenta);
+			if(abs(pdgCode)==13)track->SetMainColor(kGreen);
 			if(abs(pdgCode)==14)track->SetMainColor(kGreen);
 			if(abs(pdgCode)==2212)track->SetMainColor(kRed);
-			
+			if(abs(pdgCode)==211)track->SetMainColor(kMagenta);
+			if(abs(pdgCode)==2112)track->SetMainColor(kYellow);
+	
 			Stop[0]=wcsimroottrack->GetStop(0);
 			Stop[1]=wcsimroottrack->GetStop(1) + yOffset;
 			Stop[2]=wcsimroottrack->GetStop(2);
@@ -939,7 +952,6 @@ void update_html_summary(int iTrigger,WCSimRootTrigger * wcsimrootTrigger,bool f
 	}
 	
 	*/
-	
 	HtmlObjTable *table;
 	//fgHtmlSummary->Clear("D");
 	if(iTrigger==0)
@@ -961,13 +973,15 @@ void update_html_summary(int iTrigger,WCSimRootTrigger * wcsimrootTrigger,bool f
 	int i;
 	int used=0;
 	// Loop through elements in the TClonesArray of WCSimTracks
-	for (i=0; i<ntrack; i++)
+    int lim = 100;
+    if (lim > ntrack) lim = ntrack;
+	for (i=0; i<lim; i++)//ntrack
 	{
-		TObject *element = (wcsimrootTrigger->GetTracks())->At(i);
+        TObject *element = (wcsimrootTrigger->GetTracks())->At(i);
 		
 		WCSimRootTrack *wcsimroottrack = dynamic_cast<WCSimRootTrack*>(element);
 		int pdgCode=wcsimroottrack->GetIpnu();
-		if(pdgCode==0)continue;
+	    if(pdgCode==0)continue;
 		TString Name(Form(" #%d (%d) ",i,pdgCode));
 		
 		if(pdgCode==11)Name+="electron";
