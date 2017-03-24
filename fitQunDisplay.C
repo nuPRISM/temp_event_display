@@ -115,7 +115,7 @@ void fitQunDisplay::describe_event(int entry)
 			cout<<fq1rtotmu[ifqnse][PID]<<" 	Best-fit total predicted charge"<<endl;
 			cout<<fq1rnll[ifqnse][PID]<<" 	Best-fit -lnL"<<endl;
 			cout<<fq1rpos[ifqnse][PID][0]<< " ";
-			cout<<fq1rpos[ifqnse][PID][1]<< " ";
+			cout<<fq1rpos[ifqnse][PID][1] + yOffset<< " ";
 			cout<<fq1rpos[ifqnse][PID][2]<< " ";
 			cout<<" 	Fit vertex (0=X, 1=Y, 2=Z)"<<endl;
 			cout<<fq1rdir[ifqnse][PID][0]<<" ";
@@ -150,7 +150,7 @@ void fitQunDisplay::describe_event(int entry)
 	cout<<fqpi0mass[0]<<"  	Fit pi0 mass (always 134.9766 for constrained mass fit)"<<endl;
 	cout<<fqpi0photangle[0]<<" 	Fit opening angle between the photons"<<endl;
 	cout<<fqpi0pos[0][0]<<" ";
-	cout<<fqpi0pos[0][1]<<" ";
+	cout<<fqpi0pos[0][1] + yOffset<<" ";
 	cout<<fqpi0pos[0][2]<<" ";
 	cout<<" 	Fit vertex position"<<endl;
 	cout<<fqpi0dir1[0][0]<<" ";
@@ -190,7 +190,7 @@ void fitQunDisplay::describe_event(int entry)
 			cout<<fqmrdconv[ifqnmrfit][nRing]<<" 	Fit conversion length of each ring(always \"0\" in default mode)"<<endl;
 			cout<<fqmreloss[ifqnmrfit][nRing]<<" 	Energy lost in the upstream track segment(for upstream tracks only)"<<endl;
 			cout<<fqmrt0[ifqnmrfit][nRing]<<" 	Fit creation time of each ring"<<endl;
-			cout<<fqmrpos[ifqnmrfit][nRing][0]<<" "<<fqmrpos[ifqnmrfit][nRing][1]<<" "<<fqmrpos[ifqnmrfit][nRing][2]<<" 	Fit vertex position of each ring"<<endl;
+			cout<<fqmrpos[ifqnmrfit][nRing][0]<<" "<<fqmrpos[ifqnmrfit][nRing][1] + yOffset<<" "<<fqmrpos[ifqnmrfit][nRing][2]<<" 	Fit vertex position of each ring"<<endl;
 			cout<<fqmrdir[ifqnmrfit][nRing][0]<<" "<<fqmrdir[ifqnmrfit][nRing][1]<<" "<<fqmrdir[ifqnmrfit][nRing][2]<<" 	Fit direction of each ring"<<endl;
 		}
 	}
@@ -199,10 +199,11 @@ void fitQunDisplay::describe_event(int entry)
 }
 Bool_t fitQunDisplay::Process(Long64_t entry)
 {
-	
+    std::cout << "HELLO" << std::endl;	
 	fitQunDisplay::GetEntry(entry);
 	// useful for debug...describe_event(entry);
-	fitQunResults= new TEveElementList("fitQun Results");
+	std::cout << "HELLO2" << std::endl;	
+    fitQunResults= new TEveElementList("fitQun Results");
 	fitQunResults2D= new TEveElementList("fitQun Results (unrolled)");
 	load_event();
 	gEve->AddElement(fitQunResults);
@@ -253,7 +254,7 @@ void fitQunDisplay::load_event()
 				TString description=Form("Fitqun %s,  sub event %i",HYPO[PID].Data(),se);
 				double pos[3];
 				pos[0]=fq1rpos[se][PID][0];
-				pos[1]=fq1rpos[se][PID][1];
+				pos[1]=fq1rpos[se][PID][1] + yOffset;
 				pos[2]=fq1rpos[se][PID][2];
 				addTrack(pos,theta,phi,fq1rmom[se][PID],description,HYPERCOLOUR[PID],MASS[PID],EveSubEvent,EveSubEvent2D);
 			}
@@ -276,7 +277,7 @@ void fitQunDisplay::load_event()
 			float phi2=atan2(y,x);
 			double pos[3];
 			pos[0]=fqpi0pos[0][0];
-			pos[1]=fqpi0pos[0][1];
+			pos[1]=fqpi0pos[0][1] + yOffset;
 			pos[2]=fqpi0pos[0][2];
 			addPi0(pos,theta1,phi1,fqpi0mom1[0],theta2,phi2,fqpi0mom2[0],EveSubEvent,EveSubEvent2D);
 		}
@@ -425,7 +426,7 @@ void fitQunDisplay::createCerenkov(THKCerenkov* cone, THKCerenkov2D* cone2D,
 		int location;
 		if(FindConeEnd(pos,cerenkov,endPoint,location))
 		{
-			float rTest=sqrt(endPoint[0]*endPoint[0]+endPoint[1]*endPoint[1]);
+			float rTest=sqrt(endPoint[0]*endPoint[0]+endPoint[2]*endPoint[2]);
 			if(rTest>maxR)
 			{
 				maxTube=-1;	
@@ -458,9 +459,9 @@ void fitQunDisplay::createCerenkov(THKCerenkov* cone, THKCerenkov2D* cone2D,
 					firstZ2D=endPoint[2];
 				}
 			}
-			float r=sqrt(endPoint[0]*endPoint[0]+endPoint[1]*endPoint[1]);
-			float testz=endPoint[2];
-			if((maxZ-abs(testz)<500)&&(maxR-r)<500)
+			float r=sqrt(endPoint[0]*endPoint[0]+endPoint[2]*endPoint[2]);
+			float testy=endPoint[1];
+			if((maxY-abs(testy)<500)&&(maxR-r)<500)
 			{
 				step=delta/10.0;
 			}
@@ -481,25 +482,31 @@ void         fitQunDisplay::UnrollView(double position[3],int location)
 	double pmtZ=position[2];
 	if(location==0)
 	{
-		pmtY+=2.2*maxY;
+		//	cout<<" add 2* "<<maxY<<" to "<<*pmtY<<endl;
+		pmtY = pmtX + 1.05*maxX + maxY;
+		pmtX = pmtZ;
+		//cout<<" result is "<<*pmtY<<endl;
 	}
 	if(location==2)
-	{
+	{//		cout<<" subtract  2* "<<maxY<<" from "<<*pmtY<<endl;
 		
-		pmtY-=2.2*maxY;
+		pmtY = pmtX - 1.05*maxX - maxY;
+		pmtX = pmtZ;
 	}	
 	if(location==1)
 	{
-		float angle=atan2(pmtY,pmtX)+(3.1415927/2.0);
-		float rho=maxY*angle;
+		float angle=atan2(pmtX,pmtZ);//+(3.1415927/2.0);
+		float rho=maxZ*angle;
 		pmtX=rho;
-		pmtY=pmtZ;		
 	}
 	pmtZ=0.0;
-	float xshift=maxY*(3.1415927);
+	//cout<<" x,y,z of Unrolled phototube "<<*pmtX<<" "<<*pmtY<<" "<<*pmtZ<<endl;
+	float xshift=maxZ*(3.1415927);
 	float x=pmtX;
 	if(x>xshift)x=x-(xshift*2);
 	pmtX=x;
+	//cout<<" x,y,z of Unrolled phototube "<<*pmtX<<" "<<*pmtY<<" "<<*pmtZ<<endl;
+
 	position[0]=pmtX;
 	position[1]=pmtY;
 	position[2]=pmtZ;
@@ -513,9 +520,9 @@ int  fitQunDisplay::xyIndex(float xOry)
 }
 int fitQunDisplay::zIndex(float z)
 {
-	int indexMin= ((nZvalues)*(minZ/(maxZ-minZ)));
+	int indexMin= ((nYvalues)*(minY/(maxY-minY)));
 	
-	int index =  ((nZvalues)*(z/(maxZ-minZ)))-indexMin;
+	int index =  ((nYvalues)*(z/(maxY-minY)))-indexMin;
 	
 	return index;
 }
@@ -529,9 +536,28 @@ int fitQunDisplay::phiIndex(float x,float y)
 }
 void fitQunDisplay::PreProcessGeometry()
 {
-	
-	nZvalues=(maxZ-minZ)/100;
-	maxZIndex=0;
+    for(int tubeId=0;tubeId<wcsimrootgeom->GetWCNumPMT();tubeId++)
+    {
+        WCSimRootPMT pmt = wcsimrootgeom -> GetPMT ( tubeId );
+        int location=pmt.GetCylLoc();
+        double pmtX = pmt.GetPosition (0);
+        double pmtY = pmt.GetPosition (1);
+        double pmtZ = pmt.GetPosition (2);
+        if(pmtX>maxX)maxX=pmtX;
+        if(pmtX<minX)minX=pmtX;
+        if(pmtY>maxY)maxY=pmtY;
+        if(pmtY<minY)minY=pmtY;
+        if(pmtZ>maxZ)maxZ=pmtZ;   		
+        if(pmtZ<minZ)minZ=pmtZ;   		
+    }
+
+    float height = (maxY - minY)/2.0;
+    yOffset = height - maxY;
+    maxY = height;
+    minY = -height;
+
+	nYvalues=(maxY-minY)/100;
+	maxYIndex=0;
 	maxPhiIndex=0;
 	
 	for(int tubeId=0;tubeId<wcsimrootgeom->GetWCNumPMT();tubeId++)
@@ -539,80 +565,88 @@ void fitQunDisplay::PreProcessGeometry()
     		
     		WCSimRootPMT pmt = wcsimrootgeom -> GetPMT ( tubeId );
     		double pmtX = pmt.GetPosition (0);
-    		double pmtY = pmt.GetPosition (1);
+    		double pmtY = pmt.GetPosition (1) + yOffset;
     		double pmtZ = pmt.GetPosition (2) ;
     		int location= pmt.GetCylLoc();
+    		if(pmtY > maxY - 0.5) location = 0;
+    		else if(pmtY < minY + 0.5) location = 2;
+    		else location = 1;
+           
     		if(location ==1 )
     		{
-    			
-    			int zI = zIndex(pmtZ);
-    			int phiI = phiIndex(pmtX,pmtY);
-    			if(zI>maxZIndex)maxZIndex=zI;
+                int yI = zIndex(pmtY);
+    			int phiI = phiIndex(pmtX,pmtZ);
+    			if(yI>maxYIndex)maxYIndex=yI;
     			if(phiI>maxPhiIndex)maxPhiIndex=phiI;
     		}
     		else
     		{
     			int xI = xyIndex(pmtX);
-    			int yI = xyIndex(pmtY);
+    			int zI = xyIndex(pmtZ);
     			if(xI>maxXIndex)maxXIndex=xI;
-    			if(yI>maxYIndex)maxYIndex=yI;
+    			if(zI>maxZIndex)maxZIndex=zI;
     		}
     		
     	}
-    	CylinderTubeList = new int[(maxZIndex+1)*maxPhiIndex];	
-    	for(int i = 0;i<(maxZIndex+1)*maxPhiIndex;i++)CylinderTubeList[i]=-1;
-    	NegativeCapTubeList = new int[(maxXIndex+1)*maxYIndex];	
-    	for(int i = 0;i<(maxXIndex+1)*maxYIndex;i++)NegativeCapTubeList[i]=-1;
+    	CylinderTubeList = new int[(maxYIndex+1)*maxPhiIndex];	
+    	for(int i = 0;i<(maxYIndex+1)*maxPhiIndex;i++)CylinderTubeList[i]=-1;
+    	NegativeCapTubeList = new int[(maxXIndex+1)*maxZIndex];	
+    	for(int i = 0;i<(maxXIndex+1)*maxZIndex;i++)NegativeCapTubeList[i]=-1;
     	
-	PositiveCapTubeList = new int[(maxXIndex+1)*maxYIndex];	
-    	for(int i = 0;i<(maxXIndex+1)*maxYIndex;i++)PositiveCapTubeList[i]=-1;
+    	PositiveCapTubeList = new int[(maxXIndex+1)*maxZIndex];	
+    	for(int i = 0;i<(maxXIndex+1)*maxZIndex;i++)PositiveCapTubeList[i]=-1;
     	
     	int count=0;
     	for(int tubeId=0;tubeId<wcsimrootgeom->GetWCNumPMT();tubeId++)
     	{
    		
     		WCSimRootPMT pmt = wcsimrootgeom -> GetPMT ( tubeId );
-    		double pmtX = pmt.GetPosition (0);
-    		double pmtY = pmt.GetPosition (1);
-    		double pmtZ = pmt.GetPosition (2) ;
-    		int location= pmt.GetCylLoc();
-    		if(location ==1 )
+            double pmtX = pmt.GetPosition (0);
+            double pmtY = pmt.GetPosition (1);
+            pmtY = pmtY + yOffset;
+            double pmtZ = pmt.GetPosition (2);
+            int location= pmt.GetCylLoc();
+            if(pmtY > maxY - 0.5) location = 0;
+            else if(pmtY < minY + 0.5) location = 2;
+            else location = 1;
+
+            if(location == 1 )
     		{
-    			int zI = zIndex(pmtZ);
-    			int phiI = phiIndex(pmtX,pmtY);
-    			if(zI*maxPhiIndex+phiI>(maxZIndex+1)*maxPhiIndex)
+    			int yI = zIndex(pmtY);
+    			int phiI = phiIndex(pmtX,pmtZ);
+    			if(yI*maxPhiIndex+phiI>(maxYIndex+1)*maxPhiIndex)
     			{
     				cout<<" ERROR "<<endl;
-    				cout<<pmtX<<" "<<pmtY<<" "<<pmtZ<<" "<<zI<<" "<<phiI<<endl;
-    				cout<<" fill item "<<zI<<" "<<phiI<<" with "<<tubeId<<endl;
-    				cout<<" index is "<<zI*maxPhiIndex+phiI<<endl;
-    				cout<<" array dimensions are "<<(maxZIndex+1)*maxPhiIndex<<endl;
+    				cout<<pmtX<<" "<<pmtZ<<" "<<pmtY<<" "<<yI<<" "<<phiI<<endl;
+    				cout<<" fill item "<<yI<<" "<<phiI<<" with "<<tubeId<<endl;
+    				cout<<" index is "<<yI*maxPhiIndex+phiI<<endl;
+    				cout<<" array dimensions are "<<(maxYIndex+1)*maxPhiIndex<<endl;
     			}
     			else
-    				CylinderTubeList[zI*maxPhiIndex+phiI]=tubeId;
+    				CylinderTubeList[yI*maxPhiIndex+phiI]=tubeId;
     		}
     		else 
     		{
     			int xI = xyIndex(pmtX);
-    			int yI = xyIndex(pmtY);
-    			if(xI*maxYIndex+yI>(maxXIndex+1)*maxYIndex)
+    			int zI = xyIndex(pmtZ);
+    			if(xI*maxZIndex+zI>(maxXIndex+1)*maxZIndex)
     			{
     				cout<<" ERROR "<<endl;
-    				cout<<pmtX<<" "<<pmtY<<" "<<pmtZ<<" "<<xI<<" "<<yI<<endl;
-    				cout<<" fill item "<<xI<<" "<<yI<<" with "<<tubeId<<endl;
-    				cout<<" index is "<<xI*maxYIndex+yI<<endl;
-    				cout<<" array dimensions are "<<(maxXIndex+1)*maxYIndex<<endl;
+    				cout<<pmtX<<" "<<pmtZ<<" "<<pmtY<<" "<<xI<<" "<<zI<<endl;
+    				cout<<" fill item "<<xI<<" "<<zI<<" with "<<tubeId<<endl;
+    				cout<<" index is "<<xI*maxZIndex+zI<<endl;
+    				cout<<" array dimensions are "<<(maxXIndex+1)*maxZIndex<<endl;
     			}
     			else
     			{
     				if(location==0)
     				{
-    					PositiveCapTubeList[xI*maxYIndex+yI]=tubeId;
+    					PositiveCapTubeList[xI*maxZIndex+zI]=tubeId;
     					count+=20;
     					//if(count>100){cout<<endl;count=0;}
     				}
     				if(location==2)
-    					NegativeCapTubeList[xI*maxYIndex+yI]=tubeId;
+    					NegativeCapTubeList[xI*maxZIndex+zI]=tubeId;
     			}
     		}
     		
@@ -813,10 +847,19 @@ double fitQunDisplay::cosAngleToTube(double pos[3],double cerenkov[3],int tubeId
 {
 	WCSimRootPMT pmt = wcsimrootgeom -> GetPMT ( tubeId );
 	int location= pmt.GetCylLoc();
+	double pmtX = pmt.GetPosition (0);
+	double pmtY = pmt.GetPosition (1) + yOffset;
+	double pmtZ = pmt.GetPosition (2);
+
+
+    if(pmtY > maxY - 0.5) location = 0;
+    else if(pmtY < minY + 0.5) location = 2;
+    else location = 1;
+
 	if(location !=0 && location !=1 && location !=2)return -999;
-	double pmtX = pmt.GetPosition (0) - pos[0];
-	double pmtY = pmt.GetPosition (1) - pos[1];
-	double pmtZ = pmt.GetPosition (2) - pos[2];
+	pmtX = pmt.GetPosition (0) - pos[0];
+	pmtY = pmt.GetPosition (1) - pos[1];
+	pmtZ = pmt.GetPosition (2) - pos[2];
 	double dot=pmtX*cerenkov[0]+pmtY*cerenkov[1]+pmtZ*cerenkov[2];
 	double lTube=sqrt(pmtX*pmtX+pmtY*pmtY+pmtZ*pmtZ);
 	double lCerenkov=sqrt(cerenkov[0]*cerenkov[0]+cerenkov[1]*cerenkov[1]+cerenkov[2]*cerenkov[2]);
@@ -855,25 +898,29 @@ bool fitQunDisplay::FindConeEnd(double pos[3],double cerenkov[3],double endPoint
 		if(debug)cout<<" start searching close to previous candidate "<<maxTube;
 		WCSimRootPMT pmt = wcsimrootgeom -> GetPMT ( maxTube );
 		float pmtx=pmt.GetPosition (0);
-		float pmty=pmt.GetPosition (1);
+		float pmty=pmt.GetPosition (1) + yOffset;
 		float pmtz=pmt.GetPosition (2);
 		if(debug)cout<<" located at "<<pmtx<<" , "<<pmty<<" , "<<pmtz<<endl;
 		if(debug)cout<<" min/max z "<<minZ<<" "<<maxZ<<endl;
 		if(debug)cout<<" maxR "<<maxR<<endl;
 		location=pmt.GetCylLoc();
-		/*
+        if(pmty > maxY - 0.5) location = 0;
+        else if(pmty < minY + 0.5) location = 2;
+        else location = 1;
+
+        /*
 		Check for situations where we are about to jump from cylinder to end wall or vice versa.
 		In these cases just looking around the previous tube does not work, so don't try
 		*/
 		if(location==1){
-			if(pmtz<(minZ+50) || pmtz>(maxZ-50)){
+			if(pmty<(minY+50) || pmty>(maxY-50)){
 				//cout<<" cylinder tube is close to min or max Z"<<endl;
 				maxTube=-1;
 				goto Global;
 			}
 		}
 		if(location==0||location==2){
-			float r=sqrt(pmtx*pmtx+pmty*pmty);
+			float r=sqrt(pmtx*pmtx+pmtz*pmtz);
 			//cout<<" end cap tube r"<<r<<endl;
 			
 			if(r>(maxR-500)){
@@ -889,26 +936,26 @@ bool fitQunDisplay::FindConeEnd(double pos[3],double cerenkov[3],double endPoint
 		{
 			pmtx=pmt.GetPosition (0);
 			xI=xyIndex(pmtx);
-			pmty=pmt.GetPosition (1);
-			yI=xyIndex(pmty);
-			searchForTube(PositiveCapTubeList,xI,yI,maxYIndex,pos,cerenkov,debug,tubes);
+			pmtz=pmt.GetPosition (2);
+			zI=xyIndex(pmtz);
+			searchForTube(PositiveCapTubeList,xI,zI,maxZIndex,pos,cerenkov,debug,tubes);
 		}
 		if(location==1)
 			
 		{
-			zI=zIndex(pmtz);
-			int phiI=phiIndex(pmtx,pmty);
+			yI=zIndex(pmty);
+			int phiI=phiIndex(pmtx,pmtz);
 			//int zStep=20;
 			//int phiStep=20;
-			searchForTube(CylinderTubeList,zI,phiI,360,pos,cerenkov,debug,tubes);
+			searchForTube(CylinderTubeList,yI,phiI,360,pos,cerenkov,debug,tubes);
 		}
 		if(location==2)
 		{
 			//	cout<<" search in -ve cap "<<endl;
 			
 			xI=xyIndex(pmtx);
-			yI=xyIndex(pmty);
-			searchForTube(NegativeCapTubeList,xI,yI,maxYIndex,pos,cerenkov,debug,tubes);
+			zI=xyIndex(pmtz);
+			searchForTube(NegativeCapTubeList,xI,zI,maxZIndex,pos,cerenkov,debug,tubes);
 		}
 		maxTube=tubes[0];
 	}
@@ -923,51 +970,51 @@ Extrapolate:
 	{
 		if(debug)cout<<" start searching close to extrapolated cerenkov light "<<endl;
 		
-		float xc,yc;
-		lineTubeIntersect(cerenkov,pos,maxR,xc,yc);
+		float xc,zc;
+		lineTubeIntersect(cerenkov,pos,maxR,xc,zc);
 		//cout<<" xc,yc from lineTubeIntersect"<<xc<<" "<<yc<<endl;	
 		//cout<<" point of intersect is "<<xc<<" "<<yc<<endl;
-		float rp=sqrt(px*px+py*py);
+		float rp=sqrt(px*px+pz*pz);
 		float rc = maxR-rp;
 		
 		float theta = acos(l3);
-		float czIntersect = pz+ rc/tan(theta);
+		float cyIntersect = py+ rc/tan(theta);
 		//cout<<"  czIntersect= "<<czIntersect<<" compare to "<<minZ<<" "<<maxZ<<endl;
-		if(czIntersect<minZ||czIntersect>maxZ)
+		if(cyIntersect<minY||cyIntersect>maxY)
 		{
 			//cout<<" probably in end plates. czIntersect= "<<czIntersect<<" compare to "<<minZ<<" "<<maxZ<<endl;
 			/* calculate x,y if we have hit an end plate */
-			if(l3>0)rc=(maxZ-pz)*tan(theta);
-			else rc=(minZ-pz)*tan(theta);
+			if(l3>0)rc=(maxY-py)*tan(theta);
+			else rc=(minY-py)*tan(theta);
 			float rCap=rc+rp;
 			//	cout<<" r at end cap is "<<rCap<<endl;
-			lineTubeIntersect(cerenkov,pos,rCap,xc,yc);
+			lineTubeIntersect(cerenkov,pos,rCap,xc,zc);
 			//	cout<<" xc,yc from lineTubeIntersect: "<<xc<<" "<<yc;
 			int xI = xyIndex(xc);
-			int yI = xyIndex(yc);
+			int zI = xyIndex(zc);
 			//	cout<<" x/y indices: "<<xI<<" "<<yI<<endl;
 			//	int xStep=50;
 			//	int yStep=50;
 			//temp!
-			if(czIntersect>maxZ)
+			if(cyIntersect>maxY)
 			{
 				//	cout<<" search in positive cap "<<endl;
-				searchForTube(PositiveCapTubeList,xI,yI,maxYIndex,
+				searchForTube(PositiveCapTubeList,xI,zI,maxZIndex,
 					pos,cerenkov,kFALSE,tubes);
 			}
 			else
 			{
 				//	cout<<" search in negative cap "<<endl;
-				searchForTube(NegativeCapTubeList,xI,yI,maxYIndex,
+				searchForTube(NegativeCapTubeList,xI,zI,maxZIndex,
 					pos,cerenkov,kFALSE,tubes);
 			}
 			
 		}
 		else
 		{
-			if(debug)cout<<" intersect with cylinder = "<<xc<<" "<<yc<<" "<<czIntersect<<endl;
-			int zI = zIndex(czIntersect);
-			int phiI = phiIndex(xc,yc);
+			if(debug)cout<<" intersect with cylinder = "<<xc<<" "<<zc<<" "<<cyIntersect<<endl;
+            int yI = zIndex(cyIntersect);
+			int phiI = phiIndex(xc,zc);
 			//	cout<<" phi and z index "<<phiI<<" "<<zI<<endl;
 			//	cout<<" tube at this location is "<<CylinderTubeList[zI*maxPhiIndex+phiI]<<endl;
 			/*
@@ -976,7 +1023,7 @@ Extrapolate:
 			//	int zStep=20;
 			//	int phiStep=20;
 			if(debug)cout<<"search in cylinder "<<endl;
-			searchForTube(CylinderTubeList,zI,phiI,360,pos,cerenkov,debug,tubes);
+			searchForTube(CylinderTubeList,yI,phiI,360,pos,cerenkov,debug,tubes);
 		}
 	}
 	maxTube=tubes[0];
@@ -1029,7 +1076,11 @@ Global:
 	if(debug)cout<<" position of nearest "<<pmt.GetPosition (0)<<" , "<<pmt.GetPosition (1)<<" , "<<pmt.GetPosition (2)<<endl;
 	pmt = wcsimrootgeom -> GetPMT (maxTube); 
 	location= pmt.GetCylLoc();
-	if(debug)cout<<" location type of nearest tube is "<<location<<endl;
+//    if(pmtY > maxY - 0.5) location = 0;
+//    else if(pmtY < minY + 0.5) location = 2;
+//    else location = 1;
+
+    if(debug)cout<<" location type of nearest tube is "<<location<<endl;
 	if(wcsimrootgeom -> GetPMT (nextMaxTube).GetCylLoc() != location){
 		//	cout<<" next tube not in same location "<<endl;
 		return kFALSE; 
@@ -1044,15 +1095,15 @@ Global:
 	*/
 	pmt = wcsimrootgeom -> GetPMT (maxTube); 
 	double Xt1= pmt.GetPosition (0);  	
-	double Yt1= pmt.GetPosition (1);  	
+	double Yt1= pmt.GetPosition (1) + yOffset;  	
 	double Zt1= pmt.GetPosition (2);  	
 	pmt = wcsimrootgeom -> GetPMT (nextMaxTube); 
 	double Xt2= pmt.GetPosition (0);  	
-	double Yt2= pmt.GetPosition (1);  	
+	double Yt2= pmt.GetPosition (1) + yOffset;  	
 	double Zt2= pmt.GetPosition (2);  
 	pmt = wcsimrootgeom -> GetPMT (nextNextMaxTube); 
 	double Xt3= pmt.GetPosition (0);  	
-	double Yt3= pmt.GetPosition (1);  	
+	double Yt3= pmt.GetPosition (1) + yOffset;  	
 	double Zt3= pmt.GetPosition (2); 
 	
 	if(debug)cout<<" location of next neighbour "<<Xt2<<" "<<Yt2<<" "<<Zt2<<endl;

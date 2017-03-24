@@ -92,9 +92,13 @@ void hyperk_esd()
 	else
 	{
 		cout<<" opening file "<<fi.fFilename<<endl;
-		fiTQunFile = new TFile(fi.fFilename);
+		cout<<" opening file "<<fi.fFilename<<endl;
+	    fiTQunFile = new TFile(fi.fFilename);
 		fiTQunTree=(TTree *) fiTQunFile->Get("fiTQun");
-		fiTQun.Init(fiTQunTree);
+		cout<<" opening file "<<fi.fFilename<<endl;
+    	fiTQun.Init(fiTQunTree);
+		cout<<" opening file "<<fi.fFilename<<endl;
+
 	}
 	
 	// for fast development, hardwire a file and comment out the block above
@@ -170,10 +174,13 @@ void hyperk_esd()
     	Initialise FitQun
     	*/
     	if(FITQUN){
-    		fiTQun.setLimits(maxX,maxY,maxZ,minZ);
+            std::cout << "TESTEST" << std::endl;
+//            fiTQun.setLimits(maxX,maxY,maxZ,minZ);
     		fiTQun.SetWCSimGeom(wcsimrootgeom);
     		fiTQun.maxY=maxY;
-    	}
+    		fiTQun.yOffset=yOffset;
+            std::cout << "TESTEST1" << std::endl;
+      	}
     	/*        
     	get the WCSim information
     	*/
@@ -440,6 +447,7 @@ void make_gui()
 //______________________________________________________________________________
 void fitqun_load_event(int entry)
 {
+    std::cout << "TEST" << std::endl;
 	fiTQun.Process(entry);	
 }
 void wcsim_load_event(int iTrigger,bool &firstTrackIsNeutrino,bool &secondTrackIsTarget )
