@@ -514,11 +514,11 @@ wcsim_load_cherenkov(int iTrigger){
 		WCSimRootPMT pmt = wcsimrootgeom -> GetPMT ( tubeId );
 		double pmtX = pmt.GetPosition (0);
 		double pmtY = pmt.GetPosition (1);
-                pmtY = pmtY + yOffset;
+               pmtY = pmtY + yOffset;
 		double pmtZ = pmt.GetPosition (2);
 		int location= pmt.GetCylLoc();
-		if(pmtY > maxY - 0.5) location = 0;
-		else if(pmtY < minY + 0.5) location = 2;
+		if(pmtY > maxY - 15) location = 0;
+		else if(pmtY < minY + 15) location = 2;
 		else location = 1;
 		double pmtX2=pmtX;
 		double pmtY2=pmtY;
@@ -840,8 +840,8 @@ void createGeometry(bool flatTube)
 		double pmtZ = pmt.GetPosition (2);
                 pmtY = pmtY + yOffset;
 		int location=pmt.GetCylLoc();
-		if(pmtY > maxY - 0.5) location = 0;
-		else if(pmtY < minY + 0.5) location = 2;
+		if(pmtY > maxY - 15) location = 0;
+		else if(pmtY < minY + 15) location = 2;
 		else location = 1;
 		pmtX2=pmtX;
 		pmtY2=pmtY;
@@ -905,7 +905,7 @@ void       UnrollView(double* pmtX ,double* pmtY,double* pmtZ,int location,float
 	if(location==0)
 	{
 		//	cout<<" add 2* "<<maxY<<" to "<<*pmtY<<endl;
-		*pmtY = *pmtX + 1.05*maxX + maxY;
+		*pmtY = -*pmtX + 1.05*maxX + maxY;
 		*pmtX = *pmtZ;
 		//cout<<" result is "<<*pmtY<<endl;
 	}
@@ -917,7 +917,7 @@ void       UnrollView(double* pmtX ,double* pmtY,double* pmtZ,int location,float
 	}	
 	if(location==1)
 	{
-		float angle=atan2(*pmtX,*pmtZ);//+(3.1415927/2.0);
+		float angle=atan2(*pmtZ,*pmtX);//+(3.1415927/2.0);
 		float rho=maxZ*angle;
 		*pmtX=rho;
 		*pmtY=*pmtY;		
