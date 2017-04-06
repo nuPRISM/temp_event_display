@@ -568,8 +568,8 @@ void fitQunDisplay::PreProcessGeometry()
     		double pmtY = pmt.GetPosition (1) + yOffset;
     		double pmtZ = pmt.GetPosition (2) ;
     		int location= pmt.GetCylLoc();
-    		if(pmtY > maxY - 0.5) location = 0;
-    		else if(pmtY < minY + 0.5) location = 2;
+    		if(pmtY > maxY - 15) location = 0;
+    		else if(pmtY < minY + 15) location = 2;
     		else location = 1;
            
     		if(location ==1 )
@@ -606,8 +606,8 @@ void fitQunDisplay::PreProcessGeometry()
             pmtY = pmtY + yOffset;
             double pmtZ = pmt.GetPosition (2);
             int location= pmt.GetCylLoc();
-            if(pmtY > maxY - 0.5) location = 0;
-            else if(pmtY < minY + 0.5) location = 2;
+            if(pmtY > maxY - 15) location = 0;
+            else if(pmtY < minY + 15) location = 2;
             else location = 1;
 
             if(location == 1 )
@@ -852,8 +852,8 @@ double fitQunDisplay::cosAngleToTube(double pos[3],double cerenkov[3],int tubeId
 	double pmtZ = pmt.GetPosition (2);
 
 
-    if(pmtY > maxY - 0.5) location = 0;
-    else if(pmtY < minY + 0.5) location = 2;
+    if(pmtY > maxY - 15) location = 0;
+    else if(pmtY < minY + 15) location = 2;
     else location = 1;
 
 	if(location !=0 && location !=1 && location !=2)return -999;
@@ -904,8 +904,8 @@ bool fitQunDisplay::FindConeEnd(double pos[3],double cerenkov[3],double endPoint
 		if(debug)cout<<" min/max z "<<minZ<<" "<<maxZ<<endl;
 		if(debug)cout<<" maxR "<<maxR<<endl;
 		location=pmt.GetCylLoc();
-        if(pmty > maxY - 0.5) location = 0;
-        else if(pmty < minY + 0.5) location = 2;
+        if(pmty > maxY - 15) location = 0;
+        else if(pmty < minY + 15) location = 2;
         else location = 1;
 
         /*
@@ -1076,8 +1076,8 @@ Global:
 	if(debug)cout<<" position of nearest "<<pmt.GetPosition (0)<<" , "<<pmt.GetPosition (1)<<" , "<<pmt.GetPosition (2)<<endl;
 	pmt = wcsimrootgeom -> GetPMT (maxTube); 
 	location= pmt.GetCylLoc();
-//    if(pmtY > maxY - 0.5) location = 0;
-//    else if(pmtY < minY + 0.5) location = 2;
+//    if(pmtY > maxY - 15) location = 0;
+//    else if(pmtY < minY + 15) location = 2;
 //    else location = 1;
 
     if(debug)cout<<" location type of nearest tube is "<<location<<endl;
