@@ -511,7 +511,7 @@ wcsim_load_cherenkov(int iTrigger){
 		int tubeId=cDigiHit->GetTubeId();
 		float Q=cDigiHit->GetQ(); 
 		float Time=cDigiHit->GetT(); 
-		WCSimRootPMT pmt = wcsimrootgeom -> GetPMT ( tubeId );
+		WCSimRootPMT pmt = wcsimrootgeom -> GetPMT ( tubeId - 1);
 		double pmtX = pmt.GetPosition (0);
 		double pmtY = pmt.GetPosition (1);
                pmtY = pmtY + yOffset;
