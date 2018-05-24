@@ -558,7 +558,10 @@ void fitQunDisplay::PreProcessGeometry()
 
 	nYvalues=(maxY-minY)/100;
 	maxYIndex=0;
+	maxZIndex=0;
+	maxXIndex=0;
 	maxPhiIndex=0;
+
 	
 	for(int tubeId=0;tubeId<wcsimrootgeom->GetWCNumPMT();tubeId++)
     	{
@@ -568,8 +571,8 @@ void fitQunDisplay::PreProcessGeometry()
     		double pmtY = pmt.GetPosition (1) + yOffset;
     		double pmtZ = pmt.GetPosition (2) ;
     		int location= pmt.GetCylLoc();
-    		if(pmtY > maxY - 15) location = 0;
-    		else if(pmtY < minY + 15) location = 2;
+    		if(pmtY > maxY - 15.0) location = 0;
+    		else if(pmtY < minY + 15.0) location = 2;
     		else location = 1;
            
     		if(location ==1 )
@@ -586,13 +589,12 @@ void fitQunDisplay::PreProcessGeometry()
     			if(xI>maxXIndex)maxXIndex=xI;
     			if(zI>maxZIndex)maxZIndex=zI;
     		}
-    		
+
     	}
     	CylinderTubeList = new int[(maxYIndex+1)*maxPhiIndex];	
     	for(int i = 0;i<(maxYIndex+1)*maxPhiIndex;i++)CylinderTubeList[i]=-1;
     	NegativeCapTubeList = new int[(maxXIndex+1)*maxZIndex];	
     	for(int i = 0;i<(maxXIndex+1)*maxZIndex;i++)NegativeCapTubeList[i]=-1;
-    	
     	PositiveCapTubeList = new int[(maxXIndex+1)*maxZIndex];	
     	for(int i = 0;i<(maxXIndex+1)*maxZIndex;i++)PositiveCapTubeList[i]=-1;
     	
