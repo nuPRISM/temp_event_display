@@ -175,7 +175,7 @@ void hyperk_esd()
     	*/
     	if(FITQUN){
             std::cout << "TESTEST" << std::endl;
-//            fiTQun.setLimits(maxX,maxY,maxZ,minZ);
+            fiTQun.setLimits(maxX,maxY,maxZ,minZ);
     		fiTQun.SetWCSimGeom(wcsimrootgeom);
     		fiTQun.maxY=maxY;
     		fiTQun.yOffset=yOffset;
